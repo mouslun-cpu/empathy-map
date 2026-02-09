@@ -1,0 +1,387 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&family=Kalam:wght@300;400&display=swap');
+
+:root {
+    --bg-color: #f8f9fa;
+    --text-color: #333;
+
+    /* Pastel Section Colors - kept as requested */
+    --c-think: #FFF0F5;
+    /* Top */
+    --c-see: #FFF8E1;
+    /* Right */
+    --c-hear: #F3E5F5;
+    /* Left */
+    --c-say: #E8F5E9;
+    /* Bottom */
+    --c-pain: #ffebee;
+    /* Footer Left */
+    --c-gain: #e3f2fd;
+    /* Footer Right */
+
+    --note-bg: #fff740;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color);
+    overflow: hidden;
+    background-color: #f0f0f0;
+}
+
+/* --- Common UI --- */
+#ui-overlay {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 2000;
+    pointer-events: none;
+}
+
+.controls {
+    background: white;
+    padding: 8px 12px;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    pointer-events: auto;
+    opacity: 0.8;
+    transition: opacity 0.3s;
+}
+
+.controls:hover {
+    opacity: 1;
+}
+
+.controls button {
+    padding: 6px 12px;
+    cursor: pointer;
+    background: #fff;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+/* --- Canvas Container --- */
+#canvas-container {
+    width: 100vw;
+    height: 100vh;
+    overflow: hidden;
+    background-color: #333;
+    /* Background behind the projection sheet if needed */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: grab;
+}
+
+#canvas-container:active {
+    cursor: grabbing;
+}
+
+/* --- Main Map Board --- */
+#empathy-map {
+    /* 16:9 Landscape Layout Logic */
+    width: 100vw;
+    height: 100vh;
+    /* Maintain 16:9 aspect ratio if we really want to simulate a slide,
+       but "width: 100vw" is the primary constraint. 
+       If we want it to FEEL like a 16:9 slide, 100vw/100vh is usually fine 
+       as most screens are 16:9 or 16:10. 
+    */
+    background: white;
+    display: flex;
+    flex-direction: column;
+    position: relative;
+    transform-origin: center;
+    /* Zoom from center */
+}
+
+/* --- Upper Canvas (80%) --- */
+.upper-canvas {
+    flex: 4;
+    /* 80% roughly (4/5) */
+    position: relative;
+    width: 100%;
+
+    /* X Background Logic without borders */
+    background: conic-gradient(from 45deg at 50% 50%,
+            var(--c-see) 0deg 90deg,
+            /* Right */
+            var(--c-say) 90deg 180deg,
+            /* Bottom */
+            var(--c-hear) 180deg 270deg,
+            /* Left */
+            var(--c-think) 270deg 360deg
+            /* Top */
+        );
+}
+
+/* Diagonal Separator Lines - REMOVED as per request */
+/* .upper-canvas::after { ... } */
+
+
+/* --- Quadrants Layout --- */
+.quadrant {
+    position: absolute;
+    padding: 2.5%;
+    display: flex;
+    flex-direction: column;
+    z-index: 5;
+    /* Debug borders? No. */
+}
+
+.quadrant .section-content {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.quadrant .notes-area {
+    display: flex;
+    flex-wrap: wrap;
+    align-content: flex-start;
+    gap: 1.5vh;
+    /* Responsive gap */
+    flex-grow: 1;
+    overflow: hidden;
+    /* Prevent spill over boundaries visually */
+}
+
+/* Positioning the Quadrants */
+/* Top (Think) - Triangle Shape approximation */
+.top-section {
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 48%;
+    /* Slightly less than 50 to clear center */
+    align-items: center;
+}
+
+.top-section .section-content {
+    width: 60%;
+    /* Limit width to fit triangle top */
+    align-items: center;
+}
+
+/* Bottom (Say/Do) */
+.bottom-section {
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 48%;
+    align-items: center;
+    justify-content: flex-end;
+    /* Align content to bottom of area usually, or top? */
+}
+
+.bottom-section .section-content {
+    width: 60%;
+    align-items: center;
+    display: flex;
+    flex-direction: column-reverse;
+    /* Header at bottom? No, standard is header top. */
+    /* Let's keep header Top of content block. */
+}
+
+/* Right (See) */
+.right-section {
+    top: 0;
+    bottom: 0;
+    right: 0;
+    width: 48%;
+    justify-content: center;
+    align-items: flex-end;
+    /* Content pushed right */
+    padding-right: 5vw;
+}
+
+.right-section .section-content {
+    height: 60%;
+    width: 100%;
+    align-items: flex-end;
+}
+
+.right-section .notes-area {
+    flex-direction: row-reverse;
+    /* Flow right-to-left */
+    justify-content: flex-start;
+    /* From right edge */
+}
+
+/* Left (Hear) */
+.left-section {
+    top: 0;
+    bottom: 0;
+    left: 0;
+    width: 48%;
+    justify-content: center;
+    align-items: flex-start;
+    padding-left: 5vw;
+}
+
+.left-section .section-content {
+    height: 60%;
+    width: 100%;
+    align-items: flex-start;
+}
+
+
+/* --- Center Avatar --- */
+.center-persona {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 12vh;
+    /* Responsive size */
+    height: 12vh;
+    background: white;
+    border-radius: 50%;
+    z-index: 50;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+}
+
+.persona-icon {
+    font-size: 5vh;
+}
+
+.center-persona p {
+    font-size: 1.5vh;
+    font-weight: bold;
+    color: #555;
+}
+
+
+/* --- Lower Footer (20%) --- */
+.lower-footer {
+    flex: 1;
+    /* 20% roughly (1/5) */
+    display: flex;
+    /* No border top as per request? "Remove headers"? No borders. */
+    /* Just background color diff */
+}
+
+.footer-section {
+    flex: 1;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+}
+
+.pain-section {
+    background-color: var(--c-pain);
+    /* No border right */
+}
+
+.gain-section {
+    background-color: var(--c-gain);
+}
+
+
+/* --- Headers & Titles (Updated Interaction) --- */
+.section-header {
+    margin-bottom: 10px;
+    padding: 5px 10px;
+    border-radius: 6px;
+    transition: background-color 0.2s;
+    user-select: none;
+}
+
+.section-header:hover {
+    background-color: rgba(255, 255, 255, 0.5);
+    /* Subtle highlight */
+}
+
+.section-header h2 {
+    font-size: 2.5vh;
+    /* Responsive font code */
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #444;
+    cursor: pointer;
+    /* Indication it's clickable */
+    display: inline-block;
+    /* Wrap tight */
+    border-bottom: 2px solid transparent;
+    /* Prepare for hover */
+}
+
+.section-header:hover h2 {
+    color: #000;
+    border-bottom-color: #333;
+    /* Underline effect */
+}
+
+/* --- Sticky Notes --- */
+.sticky-note {
+    width: 14vh;
+    /* Relative to height for consistency */
+    height: 12vh;
+    background-color: var(--note-bg);
+    padding: 1.5vh;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.1);
+    font-family: 'Kalam', cursive;
+    font-size: 1.8vh;
+    color: #222;
+    transition: transform 0.2s, z-index 0s;
+    cursor: pointer;
+    border-radius: 2px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.sticky-note:hover {
+    transform: scale(1.1) rotate(0deg) !important;
+    z-index: 100;
+    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+.note-group {
+    font-size: 1.2vh;
+    text-align: right;
+    color: #666;
+    margin-top: 5px;
+    font-family: 'Inter', sans-serif;
+}
+
+
+/* --- QR Modal --- */
+#qr-modal {
+    display: none;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.9);
+}
+
+#qr-modal.active {
+    display: flex;
+}
+
+#modal-qr-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+}
+
+#modal-title {
+    color: white;
+    font-size: 2rem;
+    margin-bottom: 20px;
+    font-weight: 600;
+}
