@@ -7,56 +7,42 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-// Serve static files from 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// In-memory storage for notes
-// Structure: { category: 'think_feel' | 'see' | 'say_do' | 'hear' | 'pain' | 'gain', group: string, content: string, timestamp: number }
 let notes = [];
 
-// Routes
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/admin', (req, res) => res.sendFile(path.join(__dirname, 'public', 'admin.html')));
+app.get('/student', (req, res) => res.sendFile(path.join(__dirname, 'public', 'student.html')));
 
-app.get('/admin', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'admin.html'));
-});
-
-app.get('/student', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'student.html'));
-});
-
-// Socket.io Logic
 io.on('connection', (socket) => {
-    console.log('A user connected:', socket.id);
-
-    // Send existing notes to the newly connected client (for Admin dashboard mostly)
     socket.emit('init_notes', notes);
 
-    // Listen for new notes from students
     socket.on('submit_note', (data) => {
-        // data should be { category, group, content }
         const newNote = {
             ...data,
-            id: Date.now().toString(),
+            id: Date.now().toString() + Math.random().toString(36).substr(2, 9),
             timestamp: Date.now()
         };
-
-        console.log('New note received:', newNote);
-
-        // Save to memory
         notes.push(newNote);
-
-        // Broadcast to all clients (Admin will pick it up to display)
         io.emit('new_note', newNote);
     });
 
-    socket.on('disconnect', () => {
-        console.log('User disconnected:', socket.id);
+    socket.on('delete_note', (noteId) => {
+        notes = notes.filter(n => n.id !== noteId);
+        io.emit('note_deleted', noteId);
     });
+
+    // Handle Clear All Notes (Crucial Fix: Use 'clear_all' as requested)
+    socket.on('clear_all', () => {
+        console.log('Admin requested Clear All');
+        notes = []; // Clear variable
+        io.emit('init_notes', []); // Broadcast empty array to force redraw
+    });
+
+    socket.on('disconnect', () => { });
 });
 
 const PORT = process.env.PORT || 3000;

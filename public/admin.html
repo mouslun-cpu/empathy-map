@@ -20,6 +20,9 @@
         </div>
     </div>
 
+    <!-- Floating Clear Button (Minimalist) -->
+    <button id="clear-all-btn" title="Clear All">🗑️</button>
+
     <!-- QR Code Modal -->
     <div id="qr-modal">
         <div id="modal-title">Scan to Join</div>
@@ -33,10 +36,10 @@
         <!-- The Fixed Size Board -->
         <div id="empathy-map">
 
-            <!-- Upper Canvas (80% Height) - The X Format -->
+            <!-- Upper Canvas (75% Height) - The X Format -->
             <div class="upper-canvas">
 
-                <!-- Center Avatar (Z-Index High) -->
+                <!-- Center Avatar: Just Visual Now -->
                 <div class="center-persona" id="persona">
                     <div class="persona-icon">👤</div>
                     <p>USER</p>
@@ -45,8 +48,9 @@
                 <!-- Quadrant: Top (Think & Feel) -->
                 <div class="quadrant top-section" id="think_feel">
                     <div class="section-content">
+                        <!-- Header is absolute centered -->
                         <div class="section-header clickable-title" data-target="think_feel">
-                            <h2>🧠 Think & Feel (想與感受)</h2>
+                            <h2>🧠 Think & Feel</h2>
                         </div>
                         <div class="notes-area"></div>
                     </div>
@@ -56,7 +60,7 @@
                 <div class="quadrant right-section" id="see">
                     <div class="section-content">
                         <div class="section-header clickable-title" data-target="see">
-                            <h2>👀 See (看見)</h2>
+                            <h2>👀 See</h2>
                         </div>
                         <div class="notes-area"></div>
                     </div>
@@ -65,8 +69,9 @@
                 <!-- Quadrant: Bottom (Say & Do) -->
                 <div class="quadrant bottom-section" id="say_do">
                     <div class="section-content">
+                        <!-- Header is absolute centered bottom -->
                         <div class="section-header clickable-title" data-target="say_do">
-                            <h2>🗣️ Say & Do (說與做)</h2>
+                            <h2>🗣️ Say & Do</h2>
                         </div>
                         <div class="notes-area"></div>
                     </div>
@@ -76,20 +81,20 @@
                 <div class="quadrant left-section" id="hear">
                     <div class="section-content">
                         <div class="section-header clickable-title" data-target="hear">
-                            <h2>👂 Hear (聽見)</h2>
+                            <h2>👂 Hear</h2>
                         </div>
                         <div class="notes-area"></div>
                     </div>
                 </div>
             </div>
 
-            <!-- Lower Footer (20% Height) - Pain & Gain -->
+            <!-- Lower Footer (25% Height) - Pain & Gain -->
             <div class="lower-footer">
 
                 <!-- Left: Pain -->
                 <div class="footer-section pain-section" id="pain">
                     <div class="section-header clickable-title" data-target="pain">
-                        <h2>😖 Pain (痛苦)</h2>
+                        <h2>😖 Pain</h2>
                     </div>
                     <div class="notes-area"></div>
                 </div>
@@ -97,12 +102,15 @@
                 <!-- Right: Gain -->
                 <div class="footer-section gain-section" id="gain">
                     <div class="section-header clickable-title" data-target="gain">
-                        <h2>😍 Gain (收穫)</h2>
+                        <h2>😍 Gain</h2>
                     </div>
                     <div class="notes-area"></div>
                 </div>
 
             </div>
+
+            <!-- Copyright Notice -->
+            <div class="copyright">© 2026 Dr. Huang Wei Lun</div>
 
         </div>
     </div>
@@ -110,132 +118,37 @@
     <script>
         const socket = io();
 
-        // --- Canvas Logic (Simplification for 16:9 Viewport) ---
-        // With 100vw/100vh layout, we don't strictly need complex pan/zoom anymore
-        // if the goal is a static "Slide" view. 
-        // However, I'll keep the transform logic active just in case content overflows 
-        // or they want to zoom in on specific sticky notes.
-        // It doesn't hurt to have it.
-
+        // --- Canvas Interaction ---
         const container = document.getElementById('canvas-container');
         const map = document.getElementById('empathy-map');
         const zoomLevelDisplay = document.getElementById('zoom-level');
 
-        let scale = 1;
-        let panning = false;
-        let pointX = 0;
-        let pointY = 0;
-        let startX = 0;
-        let startY = 0;
-
-        function updateTransform() {
-            map.style.transform = `translate(${pointX}px, ${pointY}px) scale(${scale})`;
-            zoomLevelDisplay.textContent = `${Math.round(scale * 100)}%`;
-        }
-
-        container.addEventListener('wheel', (e) => {
-            if (e.ctrlKey || e.metaKey) {
-                e.preventDefault();
-                const xs = (e.clientX - pointX) / scale;
-                const ys = (e.clientY - pointY) / scale;
-                const delta = -e.deltaY;
-                (delta > 0) ? (scale *= 1.1) : (scale /= 1.1);
-                scale = Math.min(Math.max(0.1, scale), 5);
-                pointX = e.clientX - xs * scale;
-                pointY = e.clientY - ys * scale;
-                updateTransform();
-            } else {
-                // Native scroll or No-op? 
-                // Since this is now a "Screen Fit" app, native scroll shouldn't be needed usually.
-                // But dragging is available.
-            }
-        });
-
-        container.addEventListener('mousedown', (e) => {
-            if (e.target.closest('.sticky-note') || e.target.closest('button') || e.target.closest('.clickable-title')) return;
-            e.preventDefault();
-            startX = e.clientX - pointX;
-            startY = e.clientY - pointY;
-            panning = true;
-            container.style.cursor = 'grabbing';
-        });
-
-        window.addEventListener('mousemove', (e) => {
-            if (!panning) return;
-            e.preventDefault();
-            pointX = e.clientX - startX;
-            pointY = e.clientY - startY;
-            updateTransform();
-        });
-
-        window.addEventListener('mouseup', () => {
-            panning = false;
-            container.style.cursor = 'grab';
-        });
-
         function resetView() {
-            scale = 1;
-            pointX = 0;
-            pointY = 0;
-            updateTransform();
+            map.style.transform = 'none';
+            zoomLevelDisplay.textContent = '100%';
         }
-
         window.addEventListener('load', resetView);
 
-
-        // --- QR Code Logic & Modal ---
-        const baseUrl = window.location.origin + '/student';
-        const modal = document.getElementById('qr-modal');
-        const modalQrContainer = document.getElementById('modal-qr-container');
-        const modalTitle = document.getElementById('modal-title');
-
-        // New Logic: Clickable Titles
-        document.querySelectorAll('.clickable-title').forEach(header => {
-            header.addEventListener('click', (e) => {
-                e.stopPropagation(); // Prevent drag
-                const category = header.getAttribute('data-target');
-                const targetUrl = `${baseUrl}?target=${category}`;
-                showModal(category, targetUrl);
-            });
-        });
-
-        function showModal(category, url) {
-            modalQrContainer.innerHTML = '';
-            modalTitle.textContent = `Join ${category.replace('_', ' ').toUpperCase()}`;
-
-            new QRCode(modalQrContainer, {
-                text: url,
-                width: 300,
-                height: 300,
-                colorDark: "#000000",
-                colorLight: "#ffffff",
-                correctLevel: QRCode.CorrectLevel.M
-            });
-
-            modal.classList.add('active');
-        }
-
-        modal.addEventListener('click', () => {
-            modal.classList.remove('active');
+        // --- Clear Canvas Interaction (Floating Button) ---
+        // Ensure this ID matches the one in HTML
+        document.getElementById('clear-all-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            if (confirm("⚠️ 確定要清空整張地圖嗎？")) {
+                socket.emit('clear_all');
+            }
         });
 
         // --- Socket Logic ---
         function addNoteToDOM(note) {
             const sectionId = note.category;
             const section = document.getElementById(sectionId);
-
-            if (!section) {
-                console.warn('Unknown category:', sectionId);
-                return;
-            }
+            if (!section) return;
 
             const notesArea = section.querySelector('.notes-area');
 
             const noteEl = document.createElement('div');
             noteEl.className = 'sticky-note';
-
-            const rotation = Math.floor(Math.random() * 6) - 3;
-            noteEl.style.transform = `rotate(${rotation}deg)`;
+            noteEl.id = `note-${note.id}`;
 
             const contentDiv = document.createElement('div');
             contentDiv.className = 'note-content';
@@ -243,10 +156,16 @@
 
             const groupDiv = document.createElement('div');
             groupDiv.className = 'note-group';
-            groupDiv.textContent = `Group ${note.group}`;
+            groupDiv.textContent = `G${note.group}`;
 
             noteEl.appendChild(contentDiv);
             noteEl.appendChild(groupDiv);
+
+            // Right Click to Delete
+            noteEl.addEventListener('contextmenu', (e) => {
+                e.preventDefault();
+                socket.emit('delete_note', note.id);
+            });
 
             notesArea.appendChild(noteEl);
         }
@@ -258,6 +177,41 @@
 
         socket.on('new_note', (note) => {
             addNoteToDOM(note);
+        });
+
+        socket.on('note_deleted', (noteId) => {
+            const el = document.getElementById(`note-${noteId}`);
+            if (el) el.remove();
+        });
+
+        // --- QR Code Logic ---
+        const baseUrl = window.location.origin + '/student';
+        const modal = document.getElementById('qr-modal');
+        const modalQrContainer = document.getElementById('modal-qr-container');
+        const modalTitle = document.getElementById('modal-title');
+
+        document.querySelectorAll('.clickable-title').forEach(header => {
+            header.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const category = header.getAttribute('data-target');
+                const targetUrl = `${baseUrl}?target=${category}`;
+
+                modalQrContainer.innerHTML = '';
+                modalTitle.textContent = `Join ${category.replace('_', ' ').toUpperCase()}`;
+                new QRCode(modalQrContainer, {
+                    text: targetUrl,
+                    width: 300,
+                    height: 300,
+                    colorDark: "#000000",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.M
+                });
+                modal.classList.add('active');
+            });
+        });
+
+        modal.addEventListener('click', () => {
+            modal.classList.remove('active');
         });
 
     </script>
