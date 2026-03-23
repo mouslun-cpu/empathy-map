@@ -262,7 +262,21 @@
             btn.disabled = true;
             try {
                 const canvas = await html2canvas(document.getElementById('empathy-map'), {
-                    scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff'
+                    scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff',
+                    onclone: (clonedDoc) => {
+                        // Freeze noteIn animation so notes are fully visible (not mid-fade)
+                        clonedDoc.querySelectorAll('.sticky-note').forEach(el => {
+                            el.style.animation = 'none';
+                            el.style.opacity   = '1';
+                            el.style.transform = 'none';
+                        });
+                        // html2canvas can't render backdrop-filter; replace with opaque bg
+                        clonedDoc.querySelectorAll('.section-header').forEach(el => {
+                            el.style.backdropFilter       = 'none';
+                            el.style.webkitBackdropFilter = 'none';
+                            el.style.background           = 'rgba(255,255,255,0.92)';
+                        });
+                    }
                 });
                 const a = document.createElement('a');
                 a.download = `empathy-map-${new Date().toISOString().slice(0, 10)}.png`;
