@@ -1,193 +1,228 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0"> <!-- Mobile First -->
-    <title>Empathy Map - Student Input</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Empathy Map — Student</title>
     <link rel="stylesheet" href="/style.css">
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
 </head>
+<body class="student-page">
 
-<body>
-
-    <div id="student-container">
-        <div class="form-header">
-            <h1>Empathy Map Input</h1>
-            <p id="instruction-text">請選擇一個區塊開始 (Select a section)</p>
+    <!-- ── GROUP SELECTION SCREEN ── -->
+    <div id="group-select-screen">
+        <div id="group-select-wrap">
+            <div class="student-logo">🗺</div>
+            <h1 class="student-title">Empathy Map</h1>
+            <p class="student-subtitle">Select your group number to begin</p>
+            <div id="group-grid">
+                <!-- Injected by JS -->
+            </div>
         </div>
+    </div>
 
-        <!-- Section Selection Menu (Shown if no target) -->
-        <div id="section-menu" class="inputs-grid" style="display:none;">
-            <button class="menu-btn" style="background:var(--c-think)" onclick="setTarget('think_feel')">🧠 Think &
-                Feel</button>
-            <button class="menu-btn" style="background:var(--c-see)" onclick="setTarget('see')">👀 See</button>
-            <button class="menu-btn" style="background:var(--c-hear)" onclick="setTarget('hear')">👂 Hear</button>
-            <button class="menu-btn" style="background:var(--c-say)" onclick="setTarget('say_do')">🗣️ Say & Do</button>
-            <button class="menu-btn" style="background:var(--c-pain)" onclick="setTarget('pain')">😖 Pain</button>
-            <button class="menu-btn" style="background:var(--c-gain)" onclick="setTarget('gain')">😍 Gain</button>
-        </div>
+    <!-- ── GAME SCREEN ── -->
+    <div id="game-screen">
 
-        <form id="note-form" style="display:none;">
+        <header id="game-header">
+            <div id="group-chip">
+                <span id="group-chip-dot">●</span>
+                Group <span id="group-chip-num">—</span>
+            </div>
+            <div id="conn-status" class="conn-offline">⚪ Connecting</div>
+            <button id="change-group-btn">Change Group</button>
+        </header>
 
-            <div class="form-group group-selector">
-                <label for="group-select">組別 (Group)</label>
-                <select id="group-select" required>
-                    <option value="" disabled selected>請選擇組別</option>
-                    <option value="1">第 1 組</option>
-                    <option value="2">第 2 組</option>
-                    <option value="3">第 3 組</option>
-                    <option value="4">第 4 組</option>
-                    <option value="5">第 5 組</option>
-                    <option value="6">第 6 組</option>
-                    <option value="7">第 7 組</option>
-                    <option value="8">第 8 組</option>
-                    <option value="9">第 9 組</option>
-                    <option value="10">第 10 組</option>
-                </select>
+        <main id="game-main">
+
+            <!-- Waiting State -->
+            <div id="waiting-state">
+                <div class="waiting-anim">⏳</div>
+                <h2>Waiting for teacher...</h2>
+                <p>The teacher will start the next section soon.<br>Please stand by.</p>
             </div>
 
-            <div class="inputs-grid">
-                <!-- Top: Think & Feel -->
-                <div class="input-card" data-category="think_feel" style="border-top: 4px solid #FFADAD; display:none;">
-                    <label>🧠 Think & Feel (想與感受)</label>
-                    <p class="helper-text">真正重視的是什麼？憂慮與渴望？ (Preoccupations, Worries & Aspirations?)</p>
-                    <textarea name="think_feel" placeholder="輸入想法..."></textarea>
+            <!-- Active Phase Form -->
+            <div id="phase-form">
+                <div id="phase-chip">
+                    <span id="phase-chip-emoji"></span>
+                    <span id="phase-chip-label"></span>
                 </div>
-
-                <!-- Right: See -->
-                <div class="input-card" data-category="see" style="border-top: 4px solid #FFD6A5; display:none;">
-                    <label>👀 See (看見)</label>
-                    <p class="helper-text">環境如何？朋友做什麼？市場有什麼？ (Environment? Friends? Market offers?)</p>
-                    <textarea name="see" placeholder="輸入觀察..."></textarea>
-                </div>
-
-                <!-- Left: Hear -->
-                <div class="input-card" data-category="hear" style="border-top: 4px solid #FDFFB6; display:none;">
-                    <label>👂 Hear (聽見)</label>
-                    <p class="helper-text">朋友、老闆、影響者說了什麼？ (What friends/boss/influencers say?)</p>
-                    <textarea name="hear" placeholder="輸入聽到的..."></textarea>
-                </div>
-
-                <!-- Bottom: Say & Do -->
-                <div class="input-card" data-category="say_do" style="border-top: 4px solid #CAFFBF; display:none;">
-                    <label>🗣️ Say & Do (說與做)</label>
-                    <p class="helper-text">公開的行為？外表？言論？ (Public actions? Appearance? Behavior?)</p>
-                    <textarea name="say_do" placeholder="輸入行為..."></textarea>
-                </div>
-
-                <!-- Pain -->
-                <div class="input-card" data-category="pain" style="border-top: 4px solid #9BF6FF; display:none;">
-                    <label>😖 Pain (痛苦/痛點)</label>
-                    <p class="helper-text">恐懼？挫折？障礙？ (Fears? Frustrations? Obstacles?)</p>
-                    <textarea name="pain" placeholder="輸入痛點..."></textarea>
-                </div>
-
-                <!-- Gain -->
-                <div class="input-card" data-category="gain" style="border-top: 4px solid #A0C4FF; display:none;">
-                    <label>😍 Gain (收穫/渴望)</label>
-                    <p class="helper-text">想要什麼？成功的衡量標準？ (Wants/Needs? Measures of success?)</p>
-                    <textarea name="gain" placeholder="輸入渴望..."></textarea>
-                </div>
+                <p id="phase-desc"></p>
+                <textarea
+                    id="note-textarea"
+                    placeholder="Type your observation here..."
+                    rows="5"
+                    maxlength="200"
+                ></textarea>
+                <div id="char-count">0 / 200</div>
+                <button id="submit-btn">Submit Note</button>
+                <div id="submit-feedback">✅ Note submitted!</div>
             </div>
 
-            <button type="submit" id="submit-btn" class="submit-btn">送出 (Submit)</button>
-            <button type="button" class="submit-btn" style="background:#888; margin-top:10px;"
-                onclick="window.location.reload()">回主選單 (Back)</button>
-        </form>
-
-        <div id="status-message">發送成功！ (Sent Successfully)</div>
+        </main>
     </div>
 
     <script>
+        const PHASES = {
+            think_feel: {
+                label: 'Think & Feel', emoji: '🧠',
+                color: '#FCE4EC', accent: '#E91E63',
+                desc: 'What is the user thinking or feeling internally? Their worries, aspirations, and what truly matters to them.'
+            },
+            see: {
+                label: 'See', emoji: '👀',
+                color: '#FFF3E0', accent: '#F59E0B',
+                desc: 'What does the user see in their environment? Their surroundings, the media they consume, the people around them.'
+            },
+            hear: {
+                label: 'Hear', emoji: '👂',
+                color: '#F3E5F5', accent: '#9C27B0',
+                desc: 'What does the user hear? What do friends, colleagues, or influencers say that affects them?'
+            },
+            say_do: {
+                label: 'Say & Do', emoji: '🗣️',
+                color: '#E8F5E9', accent: '#4CAF50',
+                desc: 'What does the user say and do publicly? Observable behavior, attitude, and how they present themselves.'
+            },
+            pain: {
+                label: 'Pain', emoji: '😖',
+                color: '#FFEBEE', accent: '#F44336',
+                desc: 'What are the user\'s biggest fears, frustrations, and obstacles standing between them and their goals?'
+            },
+            gain: {
+                label: 'Gain', emoji: '😍',
+                color: '#E3F2FD', accent: '#2196F3',
+                desc: 'What does the user want to achieve or gain? What does success look like for them?'
+            },
+            solutions: {
+                label: 'Solutions', emoji: '💡',
+                color: '#E0F7FA', accent: '#00BCD4',
+                desc: 'Based on the pain points identified, what solutions can we propose to address the user\'s needs?'
+            }
+        };
+
+        const GROUP_COLORS = [
+            '#FFD43B', '#FF6B6B', '#51CF66', '#339AF0', '#FF922B',
+            '#CC5DE8', '#20C997', '#F783AC', '#74C0FC', '#A9E34B'
+        ];
+
         const socket = io();
-        const form = document.getElementById('note-form');
-        const statusMsg = document.getElementById('status-message');
-        const menu = document.getElementById('section-menu');
-        const instruction = document.getElementById('instruction-text');
-        const submitBtn = document.getElementById('submit-btn');
+        let myGroup = localStorage.getItem('empathy_group');
+        let currentPhase = null;
 
-        // 1. Initial State Check
-        const urlParams = new URLSearchParams(window.location.search);
-        const target = urlParams.get('target');
+        // ── Screen Management ──
+        const groupSelectScreen = document.getElementById('group-select-screen');
+        const gameScreen = document.getElementById('game-screen');
 
-        if (target) {
-            showForm(target);
-        } else {
-            menu.style.display = 'grid'; // Show menu if no target
+        function showGroupSelect() {
+            groupSelectScreen.style.display = 'flex';
+            gameScreen.style.display = 'none';
         }
 
-        // Helper to switch to form view
-        function setTarget(cat) {
-            // Update URL without reload if desired, or just show form
-            // window.history.pushState({}, '', `?target=${cat}`); // Optional
-            menu.style.display = 'none';
-            showForm(cat);
+        function showGame() {
+            groupSelectScreen.style.display = 'none';
+            gameScreen.style.display = 'flex';
+            const color = GROUP_COLORS[(parseInt(myGroup) - 1) % GROUP_COLORS.length];
+            document.documentElement.style.setProperty('--group-color', color);
+            document.getElementById('group-chip-dot').style.color = color;
+            document.getElementById('group-chip-num').textContent = myGroup;
         }
 
-        // Expose to window for onclick
-        window.setTarget = setTarget;
+        // ── Group Selection ──
+        const groupGrid = document.getElementById('group-grid');
+        for (let i = 1; i <= 10; i++) {
+            const btn = document.createElement('button');
+            btn.className = 'group-sel-btn';
+            btn.textContent = `Group ${i}`;
+            btn.style.backgroundColor = GROUP_COLORS[i - 1];
+            btn.addEventListener('click', () => {
+                myGroup = String(i);
+                localStorage.setItem('empathy_group', myGroup);
+                showGame();
+                applyPhase(currentPhase);
+            });
+            groupGrid.appendChild(btn);
+        }
 
-        function showForm(category) {
-            // Hide all cards
-            document.querySelectorAll('.input-card').forEach(el => el.style.display = 'none');
+        document.getElementById('change-group-btn').addEventListener('click', () => {
+            localStorage.removeItem('empathy_group');
+            myGroup = null;
+            showGroupSelect();
+        });
 
-            // Find matching card
-            const targetCard = document.querySelector(`.input-card[data-category="${category}"]`);
+        // ── Phase UI ──
+        const waitingEl = document.getElementById('waiting-state');
+        const formEl = document.getElementById('phase-form');
 
-            if (targetCard) {
-                targetCard.style.display = 'block';
-                form.style.display = 'block';
-                instruction.textContent = `輸入中 (Entering): ${category.replace('_', ' ').toUpperCase()}`;
-                submitBtn.textContent = `送出 ${category.replace('_', ' ').toUpperCase()}`;
-
-                // Auto focus textarea
-                const textarea = targetCard.querySelector('textarea');
-                if (textarea) textarea.focus();
+        function applyPhase(phase) {
+            currentPhase = phase;
+            if (phase && PHASES[phase]) {
+                const p = PHASES[phase];
+                waitingEl.style.display = 'none';
+                formEl.style.display = 'flex';
+                document.getElementById('phase-chip-emoji').textContent = p.emoji;
+                document.getElementById('phase-chip-label').textContent = p.label;
+                document.getElementById('phase-desc').textContent = p.desc;
+                document.documentElement.style.setProperty('--phase-color', p.color);
+                document.documentElement.style.setProperty('--phase-accent', p.accent);
+                document.getElementById('note-textarea').value = '';
+                document.getElementById('char-count').textContent = '0 / 200';
+                document.getElementById('submit-feedback').style.display = 'none';
+                document.getElementById('note-textarea').focus();
             } else {
-                // Fallback
-                menu.style.display = 'grid';
-                alert('Invalid Category');
+                waitingEl.style.display = 'flex';
+                formEl.style.display = 'none';
             }
         }
 
-        // 2. Form Submission
-        form.addEventListener('submit', (e) => {
-            e.preventDefault();
+        // ── Char Counter ──
+        document.getElementById('note-textarea').addEventListener('input', function () {
+            document.getElementById('char-count').textContent = `${this.value.length} / 200`;
+        });
 
-            const group = document.getElementById('group-select').value;
-            if (!group) {
-                alert('請先選擇組別 (Please select a group)');
+        // ── Submit ──
+        document.getElementById('submit-btn').addEventListener('click', () => {
+            const content = document.getElementById('note-textarea').value.trim();
+            if (!content) {
+                document.getElementById('note-textarea').focus();
                 return;
             }
+            if (!currentPhase || !myGroup) return;
+            socket.emit('submit_note', { category: currentPhase, group: myGroup, content });
+            document.getElementById('note-textarea').value = '';
+            document.getElementById('char-count').textContent = '0 / 200';
+            const fb = document.getElementById('submit-feedback');
+            fb.style.display = 'block';
+            setTimeout(() => { fb.style.display = 'none'; }, 2500);
+        });
 
-            // Only find visible textarea
-            const visibleCard = document.querySelector('.input-card[style*="block"]');
-            if (!visibleCard) return;
-
-            const textarea = visibleCard.querySelector('textarea');
-            const content = textarea.value.trim();
-            const category = textarea.name;
-
-            if (content) {
-                socket.emit('submit_note', {
-                    category: category,
-                    group: group,
-                    content: content
-                });
-                textarea.value = ''; // Clear after send
-
-                statusMsg.style.opacity = '1';
-                setTimeout(() => {
-                    statusMsg.style.opacity = '0';
-                }, 3000);
-            } else {
-                alert('請輸入內容 (Please enter content)');
+        // Also allow Enter + Ctrl/Cmd to submit
+        document.getElementById('note-textarea').addEventListener('keydown', e => {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                document.getElementById('submit-btn').click();
             }
         });
+
+        // ── Socket Events ──
+        socket.on('connect', () => {
+            document.getElementById('conn-status').textContent = '🟢 Connected';
+            document.getElementById('conn-status').className = 'conn-online';
+        });
+        socket.on('disconnect', () => {
+            document.getElementById('conn-status').textContent = '🔴 Disconnected';
+            document.getElementById('conn-status').className = 'conn-offline';
+        });
+        socket.on('init_data', ({ currentPhase: p }) => applyPhase(p));
+        socket.on('phase_changed', applyPhase);
+        socket.on('restarted', () => applyPhase(null));
+
+        // ── Init ──
+        if (myGroup) {
+            showGame();
+        } else {
+            showGroupSelect();
+        }
     </script>
-
 </body>
-
 </html>
-```

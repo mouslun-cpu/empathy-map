@@ -1,220 +1,255 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empathy Map - Teacher Dashboard</title>
+    <title>Empathy Map — Teacher</title>
     <link rel="stylesheet" href="/style.css">
-    <!-- CDN Libraries -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
 </head>
+<body class="admin-page">
 
-<body>
+    <!-- ── CONTROL BAR ── -->
+    <header id="ctrl-bar">
+        <div id="ctrl-brand">
+            <span class="brand-icon">🗺</span>
+            <span class="brand-text">Empathy Map</span>
+        </div>
 
-    <div id="ui-overlay">
-        <div class="controls">
-            <button onclick="resetView()">Reset View</button>
-            <div class="zoom-level" id="zoom-level">100%</div>
+        <nav id="ctrl-phases">
+            <button class="phase-btn" data-phase="think_feel"><span class="pb-emoji">🧠</span><span class="pb-label">Think & Feel</span></button>
+            <button class="phase-btn" data-phase="see"><span class="pb-emoji">👀</span><span class="pb-label">See</span></button>
+            <button class="phase-btn" data-phase="hear"><span class="pb-emoji">👂</span><span class="pb-label">Hear</span></button>
+            <button class="phase-btn" data-phase="say_do"><span class="pb-emoji">🗣️</span><span class="pb-label">Say & Do</span></button>
+            <button class="phase-btn" data-phase="pain"><span class="pb-emoji">😖</span><span class="pb-label">Pain</span></button>
+            <button class="phase-btn" data-phase="gain"><span class="pb-emoji">😍</span><span class="pb-label">Gain</span></button>
+            <button class="phase-btn" data-phase="solutions"><span class="pb-emoji">💡</span><span class="pb-label">Solutions</span></button>
+        </nav>
+
+        <div id="ctrl-actions">
+            <button class="ctrl-btn" id="qr-btn">📱 QR Code</button>
+            <button class="ctrl-btn" id="export-btn">⬇️ Export</button>
+            <button class="ctrl-btn ctrl-btn-danger" id="restart-btn">⟳ Restart</button>
+        </div>
+    </header>
+
+    <!-- ── QR MODAL ── -->
+    <div id="qr-modal" class="modal-overlay">
+        <div class="modal-card">
+            <h2 class="modal-title">📱 Join the Game</h2>
+            <div id="modal-qr-container"></div>
+            <p id="modal-url"></p>
+            <p class="modal-hint">Students scan once — group selection is on their screen</p>
+            <button class="modal-close-btn" id="qr-close">✕ Close</button>
         </div>
     </div>
 
-    <!-- Floating Clear Button (Minimalist) -->
-    <button id="clear-all-btn" title="Clear All">🗑️</button>
-
-    <!-- QR Code Modal -->
-    <div id="qr-modal">
-        <div id="modal-title">Scan to Join</div>
-        <div id="modal-qr-container"></div>
-        <p style="color: white; margin-top: 20px; opacity: 0.8;">Click anywhere to close</p>
+    <!-- ── RESTART CONFIRM MODAL ── -->
+    <div id="confirm-modal" class="modal-overlay">
+        <div class="modal-card modal-card-sm">
+            <div class="modal-warn-icon">⚠️</div>
+            <h3 class="modal-title">Restart the Game?</h3>
+            <p class="modal-desc">All sticky notes will be deleted and the active phase will be reset. This cannot be undone.</p>
+            <div class="modal-btns">
+                <button id="confirm-yes" class="modal-btn modal-btn-danger">Yes, Restart</button>
+                <button id="confirm-no" class="modal-btn modal-btn-secondary">Cancel</button>
+            </div>
+        </div>
     </div>
 
-    <!-- Main Canvas Container -->
-    <div id="canvas-container">
-
-        <!-- The Fixed Size Board -->
+    <!-- ── EMPATHY MAP ── -->
+    <div id="map-wrapper">
         <div id="empathy-map">
 
-            <!-- Upper Canvas (75% Height) - The X Format -->
             <div class="upper-canvas">
 
-                <!-- Center Avatar: Just Visual Now -->
-                <div class="center-persona" id="persona">
-                    <div class="persona-icon">👤</div>
-                    <p>USER</p>
+                <!-- Center Persona -->
+                <div class="center-persona">
+                    <div class="persona-avatar">👤</div>
+                    <p class="persona-label">USER</p>
                 </div>
 
-                <!-- Quadrant: Top (Think & Feel) -->
+                <!-- Think & Feel (Top) -->
                 <div class="quadrant top-section" id="think_feel">
                     <div class="section-content">
-                        <!-- Header is absolute centered -->
-                        <div class="section-header clickable-title" data-target="think_feel">
-                            <h2>🧠 Think & Feel</h2>
-                        </div>
+                        <div class="section-header"><h2>🧠 Think & Feel</h2></div>
                         <div class="notes-area"></div>
                     </div>
                 </div>
 
-                <!-- Quadrant: Right (See) -->
+                <!-- See (Right) -->
                 <div class="quadrant right-section" id="see">
                     <div class="section-content">
-                        <div class="section-header clickable-title" data-target="see">
-                            <h2>👀 See</h2>
-                        </div>
+                        <div class="section-header"><h2>👀 See</h2></div>
                         <div class="notes-area"></div>
                     </div>
                 </div>
 
-                <!-- Quadrant: Bottom (Say & Do) -->
+                <!-- Say & Do (Bottom) -->
                 <div class="quadrant bottom-section" id="say_do">
                     <div class="section-content">
-                        <!-- Header is absolute centered bottom -->
-                        <div class="section-header clickable-title" data-target="say_do">
-                            <h2>🗣️ Say & Do</h2>
-                        </div>
+                        <div class="section-header"><h2>🗣️ Say & Do</h2></div>
                         <div class="notes-area"></div>
                     </div>
                 </div>
 
-                <!-- Quadrant: Left (Hear) -->
+                <!-- Hear (Left) -->
                 <div class="quadrant left-section" id="hear">
                     <div class="section-content">
-                        <div class="section-header clickable-title" data-target="hear">
-                            <h2>👂 Hear</h2>
-                        </div>
+                        <div class="section-header"><h2>👂 Hear</h2></div>
                         <div class="notes-area"></div>
                     </div>
                 </div>
+
             </div>
 
-            <!-- Lower Footer (25% Height) - Pain & Gain -->
+            <!-- Footer: Pain / Gain / Solutions -->
             <div class="lower-footer">
-
-                <!-- Left: Pain -->
                 <div class="footer-section pain-section" id="pain">
-                    <div class="section-header clickable-title" data-target="pain">
-                        <h2>😖 Pain</h2>
-                    </div>
+                    <div class="section-header"><h2>😖 Pain</h2></div>
                     <div class="notes-area"></div>
                 </div>
-
-                <!-- Right: Gain -->
                 <div class="footer-section gain-section" id="gain">
-                    <div class="section-header clickable-title" data-target="gain">
-                        <h2>😍 Gain</h2>
-                    </div>
+                    <div class="section-header"><h2>😍 Gain</h2></div>
                     <div class="notes-area"></div>
                 </div>
-
+                <div class="footer-section solutions-section" id="solutions">
+                    <div class="section-header"><h2>💡 Solutions</h2></div>
+                    <div class="notes-area"></div>
+                </div>
             </div>
 
-            <!-- Copyright Notice -->
-            <div class="copyright">© 2026 Dr. Huang Wei Lun</div>
-
+            <div class="copyright">© 2026 Dr. Huang Wei Lun &nbsp;|&nbsp; v2.0</div>
         </div>
     </div>
 
     <script>
         const socket = io();
+        let currentPhase = null;
 
-        // --- Canvas Interaction ---
-        const container = document.getElementById('canvas-container');
-        const map = document.getElementById('empathy-map');
-        const zoomLevelDisplay = document.getElementById('zoom-level');
+        const GROUP_COLORS = [
+            '#FFD43B', '#FF6B6B', '#51CF66', '#339AF0', '#FF922B',
+            '#CC5DE8', '#20C997', '#F783AC', '#74C0FC', '#A9E34B'
+        ];
 
-        function resetView() {
-            map.style.transform = 'none';
-            zoomLevelDisplay.textContent = '100%';
+        function getGroupColor(group) {
+            return GROUP_COLORS[(parseInt(group) - 1) % GROUP_COLORS.length] || '#FFD43B';
         }
-        window.addEventListener('load', resetView);
 
-        // --- Clear Canvas Interaction (Floating Button) ---
-        // Ensure this ID matches the one in HTML
-        document.getElementById('clear-all-btn').addEventListener('click', (e) => {
-            e.stopPropagation();
-            if (confirm("⚠️ 確定要清空整張地圖嗎？")) {
-                socket.emit('clear_all');
+        // ── Phase Control ──
+        function applyPhase(phase) {
+            currentPhase = phase;
+            document.querySelectorAll('.quadrant, .footer-section').forEach(el => el.classList.remove('section-active'));
+            document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('active'));
+            if (phase) {
+                document.getElementById(phase)?.classList.add('section-active');
+                document.querySelector(`.phase-btn[data-phase="${phase}"]`)?.classList.add('active');
             }
+        }
+
+        // Toggle phase on click (click active → deactivate)
+        document.querySelectorAll('.phase-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const p = btn.dataset.phase;
+                socket.emit('set_phase', p === currentPhase ? null : p);
+            });
         });
 
-        // --- Socket Logic ---
+        // ── Notes ──
+        function escHtml(str) {
+            return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+        }
+
         function addNoteToDOM(note) {
-            const sectionId = note.category;
-            const section = document.getElementById(sectionId);
+            const section = document.getElementById(note.category);
             if (!section) return;
+            const area = section.querySelector('.notes-area');
 
-            const notesArea = section.querySelector('.notes-area');
+            const el = document.createElement('div');
+            el.className = 'sticky-note';
+            el.id = `note-${note.id}`;
+            el.style.backgroundColor = getGroupColor(note.group);
+            el.innerHTML = `<div class="note-content">${escHtml(note.content)}</div><div class="note-group">G${note.group}</div>`;
 
-            const noteEl = document.createElement('div');
-            noteEl.className = 'sticky-note';
-            noteEl.id = `note-${note.id}`;
-
-            const contentDiv = document.createElement('div');
-            contentDiv.className = 'note-content';
-            contentDiv.textContent = note.content;
-
-            const groupDiv = document.createElement('div');
-            groupDiv.className = 'note-group';
-            groupDiv.textContent = `G${note.group}`;
-
-            noteEl.appendChild(contentDiv);
-            noteEl.appendChild(groupDiv);
-
-            // Right Click to Delete
-            noteEl.addEventListener('contextmenu', (e) => {
+            el.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 socket.emit('delete_note', note.id);
             });
 
-            notesArea.appendChild(noteEl);
+            area.appendChild(el);
         }
 
-        socket.on('init_notes', (notes) => {
+        // ── Socket Events ──
+        socket.on('init_data', ({ notes, currentPhase: p }) => {
             document.querySelectorAll('.sticky-note').forEach(el => el.remove());
-            notes.forEach(note => addNoteToDOM(note));
+            notes.forEach(addNoteToDOM);
+            applyPhase(p);
+        });
+        socket.on('new_note', addNoteToDOM);
+        socket.on('note_deleted', id => document.getElementById(`note-${id}`)?.remove());
+        socket.on('phase_changed', applyPhase);
+        socket.on('restarted', () => {
+            document.querySelectorAll('.sticky-note').forEach(el => el.remove());
+            applyPhase(null);
         });
 
-        socket.on('new_note', (note) => {
-            addNoteToDOM(note);
+        // ── QR Code ──
+        const qrModal = document.getElementById('qr-modal');
+        let qrDone = false;
+
+        document.getElementById('qr-btn').addEventListener('click', () => {
+            if (!qrDone) {
+                const url = window.location.origin + '/student';
+                document.getElementById('modal-url').textContent = url;
+                try {
+                    new QRCode(document.getElementById('modal-qr-container'), {
+                        text: url, width: 260, height: 260,
+                        colorDark: '#111827', colorLight: '#ffffff',
+                        correctLevel: QRCode.CorrectLevel.M
+                    });
+                    qrDone = true;
+                } catch (e) {
+                    document.getElementById('modal-qr-container').textContent = url;
+                }
+            }
+            qrModal.classList.add('active');
         });
+        document.getElementById('qr-close').addEventListener('click', () => qrModal.classList.remove('active'));
+        qrModal.addEventListener('click', e => { if (e.target === qrModal) qrModal.classList.remove('active'); });
 
-        socket.on('note_deleted', (noteId) => {
-            const el = document.getElementById(`note-${noteId}`);
-            if (el) el.remove();
-        });
-
-        // --- QR Code Logic ---
-        const baseUrl = window.location.origin + '/student';
-        const modal = document.getElementById('qr-modal');
-        const modalQrContainer = document.getElementById('modal-qr-container');
-        const modalTitle = document.getElementById('modal-title');
-
-        document.querySelectorAll('.clickable-title').forEach(header => {
-            header.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const category = header.getAttribute('data-target');
-                const targetUrl = `${baseUrl}?target=${category}`;
-
-                modalQrContainer.innerHTML = '';
-                modalTitle.textContent = `Join ${category.replace('_', ' ').toUpperCase()}`;
-                new QRCode(modalQrContainer, {
-                    text: targetUrl,
-                    width: 300,
-                    height: 300,
-                    colorDark: "#000000",
-                    colorLight: "#ffffff",
-                    correctLevel: QRCode.CorrectLevel.M
+        // ── Export ──
+        document.getElementById('export-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('export-btn');
+            btn.textContent = '⏳ Exporting...';
+            btn.disabled = true;
+            try {
+                const canvas = await html2canvas(document.getElementById('empathy-map'), {
+                    scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff'
                 });
-                modal.classList.add('active');
-            });
+                const a = document.createElement('a');
+                a.download = `empathy-map-${new Date().toISOString().slice(0, 10)}.png`;
+                a.href = canvas.toDataURL('image/png');
+                a.click();
+            } catch (e) {
+                alert('Export failed. Please try again.');
+                console.error(e);
+            } finally {
+                btn.textContent = '⬇️ Export';
+                btn.disabled = false;
+            }
         });
 
-        modal.addEventListener('click', () => {
-            modal.classList.remove('active');
+        // ── Restart ──
+        const confirmModal = document.getElementById('confirm-modal');
+        document.getElementById('restart-btn').addEventListener('click', () => confirmModal.classList.add('active'));
+        document.getElementById('confirm-yes').addEventListener('click', () => {
+            socket.emit('restart');
+            confirmModal.classList.remove('active');
         });
-
+        document.getElementById('confirm-no').addEventListener('click', () => confirmModal.classList.remove('active'));
+        confirmModal.addEventListener('click', e => { if (e.target === confirmModal) confirmModal.classList.remove('active'); });
     </script>
 </body>
-
 </html>
