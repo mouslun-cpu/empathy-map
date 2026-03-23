@@ -198,6 +198,30 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
     stroke-width: 0.5;
 }
 
+/* ── Active Outline SVG ── */
+#active-outline-svg {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    z-index: 4;
+    pointer-events: none;
+}
+#active-outline-svg polygon {
+    fill: none;
+    stroke-width: 4;
+    vector-effect: non-scaling-stroke;
+    display: none;
+}
+#active-outline-svg polygon.active-poly {
+    display: block;
+    animation: polyPulse 2s ease-in-out infinite;
+}
+@keyframes polyPulse {
+    0%, 100% { stroke-opacity: 1; }
+    50%       { stroke-opacity: 0.4; }
+}
+
 /* ── Quadrants ── */
 .quadrant {
     position: absolute;
@@ -218,7 +242,6 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
 #gain        { --active-border: var(--a-gain); }
 #solutions   { --active-border: var(--a-solutions); }
 
-.quadrant.section-active,
 .footer-section.section-active {
     box-shadow: inset 0 0 0 4px var(--active-border, #6B7280);
     animation: pulseBorder 2s ease-in-out infinite;
@@ -229,12 +252,11 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
 }
 
 .quadrant .section-content {
-    position: relative;
+    position: absolute;
     display: flex;
     flex-direction: column;
     overflow: visible;
     pointer-events: none;
-    /* width & height set per-section below */
 }
 
 /* ── Section Headers ── */
@@ -273,59 +295,28 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
 
 /* ── Quadrant Positions ── */
 
-/* Think & Feel — top trapezoid, wide at top, diagonal cuts at bottom corners */
-.top-section {
-    top: 0; left: 0; right: 0; height: 55%;
-    align-items: center;
-    clip-path: polygon(0% 0%, 100% 0%, 68% 100%, 32% 100%);
-}
-.top-section > .section-header {
-    position: absolute; z-index: 20;
-    top: 14px; left: 50%; transform: translateX(-50%);
-}
-.top-section .section-content {
-    width: 68%; margin-top: 44px; /* push below header */
+/* All 4 upper sections span the full upper canvas; clip-path cuts each to its triangle */
+.top-section, .right-section, .bottom-section, .left-section {
+    top: 0; left: 0; right: 0; bottom: 0;
 }
 
-/* See — right trapezoid, wide on right, diagonal cuts on left edge */
-.right-section {
-    top: 0; bottom: 0; right: 0; width: 50%;
-    justify-content: center; align-items: flex-end;
-    padding-right: 16px;
-    clip-path: polygon(0% 28%, 100% 0%, 100% 100%, 0% 72%);
-}
-.right-section > .section-header {
-    position: absolute; z-index: 20;
-    top: 50%; right: 16px; transform: translateY(-50%);
-}
-.right-section .section-content { width: 72%; }
+/* Triangular clip-paths matching conic-gradient corner-to-corner X diagonals */
+.top-section    { clip-path: polygon(0% 0%, 100% 0%, 50% 50%); }
+.right-section  { clip-path: polygon(100% 0%, 100% 100%, 50% 50%); }
+.bottom-section { clip-path: polygon(0% 100%, 100% 100%, 50% 50%); }
+.left-section   { clip-path: polygon(0% 0%, 0% 100%, 50% 50%); }
 
-/* Say & Do — bottom trapezoid, wide at bottom, diagonal cuts at top corners */
-.bottom-section {
-    bottom: 0; left: 0; right: 0; height: 55%;
-    justify-content: flex-end; align-items: center;
-    clip-path: polygon(32% 0%, 68% 0%, 100% 100%, 0% 100%);
-}
-.bottom-section > .section-header {
-    position: absolute; z-index: 20;
-    bottom: 14px; left: 50%; transform: translateX(-50%);
-}
-.bottom-section .section-content {
-    width: 68%; margin-bottom: 44px; /* push above header */
-}
+/* Section Headers — absolutely positioned within each triangular region */
+.top-section > .section-header    { top: 12px;    left: 50%;  transform: translateX(-50%); }
+.right-section > .section-header  { top: 50%;     right: 14px; transform: translateY(-50%); }
+.bottom-section > .section-header { bottom: 12px; left: 50%;  transform: translateX(-50%); }
+.left-section > .section-header   { top: 50%;     left: 14px; transform: translateY(-50%); }
 
-/* Hear — left trapezoid, wide on left, diagonal cuts on right edge */
-.left-section {
-    top: 0; bottom: 0; left: 0; width: 50%;
-    justify-content: center; align-items: flex-start;
-    padding-left: 16px;
-    clip-path: polygon(0% 0%, 100% 28%, 100% 72%, 0% 100%);
-}
-.left-section > .section-header {
-    position: absolute; z-index: 20;
-    top: 50%; left: 16px; transform: translateY(-50%);
-}
-.left-section .section-content { width: 72%; }
+/* Notes Content Areas — positioned in the safe inner zone of each triangle */
+.top-section .section-content    { top: 42px;    left: 50%;  transform: translateX(-50%); width: 48%; }
+.right-section .section-content  { top: 50%;     right: 14px; transform: translateY(-50%); width: 38%; }
+.bottom-section .section-content { bottom: 42px; left: 50%;  transform: translateX(-50%); width: 48%; }
+.left-section .section-content   { top: 50%;     left: 14px; transform: translateY(-50%); width: 38%; }
 
 /* ── Center Persona ── */
 .center-persona {

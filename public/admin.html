@@ -71,12 +71,18 @@
                     <p class="persona-label">USER</p>
                 </div>
 
-                <!-- Diagonal X divider lines -->
+                <!-- Diagonal X divider lines (corner-to-corner) -->
                 <svg class="canvas-x-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    <line x1="0" y1="0" x2="50" y2="50"/>
-                    <line x1="100" y1="0" x2="50" y2="50"/>
-                    <line x1="0" y1="100" x2="50" y2="50"/>
-                    <line x1="100" y1="100" x2="50" y2="50"/>
+                    <line x1="0" y1="0" x2="100" y2="100"/>
+                    <line x1="100" y1="0" x2="0" y2="100"/>
+                </svg>
+
+                <!-- Active section outline (triangular polygons per phase) -->
+                <svg id="active-outline-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    <polygon id="poly-think_feel" points="0,0 100,0 50,50"/>
+                    <polygon id="poly-see"        points="100,0 100,100 50,50"/>
+                    <polygon id="poly-say_do"     points="100,100 0,100 50,50"/>
+                    <polygon id="poly-hear"       points="0,100 0,0 50,50"/>
                 </svg>
 
                 <!-- Think & Feel (Top) -->
@@ -146,14 +152,28 @@
             return GROUP_COLORS[(parseInt(group) - 1) % GROUP_COLORS.length] || '#FFD43B';
         }
 
+        // Active border color per upper-quadrant phase
+        const PHASE_OUTLINE_COLORS = {
+            think_feel: '#EC4899',
+            see:        '#F59E0B',
+            hear:       '#A855F7',
+            say_do:     '#22C55E'
+        };
+
         // ── Phase Control ──
         function applyPhase(phase) {
             currentPhase = phase;
             document.querySelectorAll('.quadrant, .footer-section').forEach(el => el.classList.remove('section-active'));
             document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('active'));
+            document.querySelectorAll('#active-outline-svg polygon').forEach(p => p.classList.remove('active-poly'));
             if (phase) {
                 document.getElementById(phase)?.classList.add('section-active');
                 document.querySelector(`.phase-btn[data-phase="${phase}"]`)?.classList.add('active');
+                const poly = document.getElementById(`poly-${phase}`);
+                if (poly) {
+                    poly.style.stroke = PHASE_OUTLINE_COLORS[phase] || '#6B7280';
+                    poly.classList.add('active-poly');
+                }
             }
         }
 
