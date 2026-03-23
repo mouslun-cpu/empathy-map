@@ -65,25 +65,19 @@
 
             <div class="upper-canvas">
 
-                <!-- Center Persona -->
-                <div class="center-persona">
-                    <div class="persona-avatar">👤</div>
-                    <p class="persona-label">USER</p>
-                </div>
+                <!-- 1. Triangle background fills (clipped solid colors, visual only) -->
+                <div class="quad-bg bg-think"></div>
+                <div class="quad-bg bg-see"></div>
+                <div class="quad-bg bg-say"></div>
+                <div class="quad-bg bg-hear"></div>
 
-                <!-- Diagonal X divider lines (corner-to-corner) -->
+                <!-- 2. Diagonal X divider lines (corner-to-corner) -->
                 <svg class="canvas-x-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                     <line x1="0" y1="0" x2="100" y2="100"/>
                     <line x1="100" y1="0" x2="0" y2="100"/>
                 </svg>
 
-                <!-- Active section outline (triangular polygons per phase) -->
-                <svg id="active-outline-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
-                    <polygon id="poly-think_feel" points="0,0 100,0 50,50"/>
-                    <polygon id="poly-see"        points="100,0 100,100 50,50"/>
-                    <polygon id="poly-say_do"     points="100,100 0,100 50,50"/>
-                    <polygon id="poly-hear"       points="0,100 0,0 50,50"/>
-                </svg>
+                <!-- 3. Section containers — NO clip-path so notes are never clipped -->
 
                 <!-- Think & Feel (Top) -->
                 <div class="quadrant top-section" id="think_feel">
@@ -115,6 +109,20 @@
                     <div class="section-content">
                         <div class="notes-area"></div>
                     </div>
+                </div>
+
+                <!-- 4. Active section outline SVG (after sections — sits above notes/headers in DOM order) -->
+                <svg id="active-outline-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
+                    <polygon id="poly-think_feel" points="0,0 100,0 50,50"/>
+                    <polygon id="poly-see"        points="100,0 100,100 50,50"/>
+                    <polygon id="poly-say_do"     points="100,100 0,100 50,50"/>
+                    <polygon id="poly-hear"       points="0,100 0,0 50,50"/>
+                </svg>
+
+                <!-- 5. Center Persona (z-index: 100, always on top of everything) -->
+                <div class="center-persona">
+                    <div class="persona-avatar">👤</div>
+                    <p class="persona-label">USER</p>
                 </div>
 
             </div>

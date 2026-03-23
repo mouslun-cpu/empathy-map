@@ -174,23 +174,29 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
     flex: 3;
     position: relative;
     width: 100%;
-    background: conic-gradient(
-        from 45deg at 50% 50%,
-        var(--c-see)   0deg   90deg,
-        var(--c-say)   90deg  180deg,
-        var(--c-hear)  180deg 270deg,
-        var(--c-think) 270deg 360deg
-    );
+    background: transparent;
     pointer-events: none;
 }
 
+/* ── Triangle Background Fills ── */
+/* Separate clipped divs so sections have no clip-path and notes are never cut off */
+.quad-bg {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+}
+.bg-think { background: var(--c-think); clip-path: polygon(0% 0%, 100% 0%, 50% 50%); }
+.bg-see   { background: var(--c-see);   clip-path: polygon(100% 0%, 100% 100%, 50% 50%); }
+.bg-say   { background: var(--c-say);   clip-path: polygon(0% 100%, 100% 100%, 50% 50%); }
+.bg-hear  { background: var(--c-hear);  clip-path: polygon(0% 0%, 0% 100%, 50% 50%); }
+
 /* ── X Divider Lines ── */
+/* No z-index — DOM order places this above .quad-bg but below sections */
 .canvas-x-lines {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 3;
     pointer-events: none;
 }
 .canvas-x-lines line {
@@ -199,12 +205,13 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
 }
 
 /* ── Active Outline SVG ── */
+/* z-index: 50 — above section headers (z:20) but below center-persona (z:100) */
 #active-outline-svg {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    z-index: 4;
+    z-index: 50;
     pointer-events: none;
 }
 #active-outline-svg polygon {
@@ -300,11 +307,8 @@ body { font-family: var(--font-ui); color: #111827; overflow: hidden; }
     top: 0; left: 0; right: 0; bottom: 0;
 }
 
-/* Triangular clip-paths matching conic-gradient corner-to-corner X diagonals */
-.top-section    { clip-path: polygon(0% 0%, 100% 0%, 50% 50%); }
-.right-section  { clip-path: polygon(100% 0%, 100% 100%, 50% 50%); }
-.bottom-section { clip-path: polygon(0% 100%, 100% 100%, 50% 50%); }
-.left-section   { clip-path: polygon(0% 0%, 0% 100%, 50% 50%); }
+/* No clip-path on sections — backgrounds come from .quad-bg divs.
+   Removing clip-path ensures sticky notes are never cut off at diagonal edges. */
 
 /* Section Headers — absolutely positioned within each triangular region */
 .top-section > .section-header    { top: 12px;    left: 50%;  transform: translateX(-50%); }
