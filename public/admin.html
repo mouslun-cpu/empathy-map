@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Empathy Map — Teacher</title>
+    <title>Interactive Canvas — Teacher</title>
     <link rel="stylesheet" href="/style.css">
     <script src="/socket.io/socket.io.js"></script>
     <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs/qrcode.min.js"></script>
@@ -15,18 +15,38 @@
     <header id="ctrl-bar">
         <div id="ctrl-brand">
             <span class="brand-icon">🗺</span>
-            <span class="brand-text">Empathy Map</span>
+            <span class="brand-text">Canvas</span>
         </div>
 
+        <!-- Template Switcher -->
+        <div id="template-switch">
+            <button class="template-btn active" data-template="empathy">🗺 Empathy Map</button>
+            <button class="template-btn" data-template="scamper">🔬 SCAMPER</button>
+        </div>
+
+        <!-- Empathy Map Phases -->
         <nav id="ctrl-phases">
-            <button class="phase-btn" data-phase="think_feel"><span class="pb-emoji">🧠</span><span class="pb-label">Think & Feel</span></button>
-            <button class="phase-btn" data-phase="see"><span class="pb-emoji">👀</span><span class="pb-label">See</span></button>
-            <button class="phase-btn" data-phase="hear"><span class="pb-emoji">👂</span><span class="pb-label">Hear</span></button>
-            <button class="phase-btn" data-phase="say_do"><span class="pb-emoji">🗣️</span><span class="pb-label">Say & Do</span></button>
-            <button class="phase-btn" data-phase="pain"><span class="pb-emoji">😖</span><span class="pb-label">Pain</span></button>
-            <button class="phase-btn" data-phase="gain"><span class="pb-emoji">😍</span><span class="pb-label">Gain</span></button>
-            <button class="phase-btn" data-phase="solutions"><span class="pb-emoji">💡</span><span class="pb-label">Solutions</span></button>
+            <button class="phase-btn phase-abbr-btn" data-phase="think_feel">T&F</button>
+            <button class="phase-btn phase-abbr-btn" data-phase="see">See</button>
+            <button class="phase-btn phase-abbr-btn" data-phase="hear">Hear</button>
+            <button class="phase-btn phase-abbr-btn" data-phase="say_do">S&D</button>
+            <button class="phase-btn phase-abbr-btn" data-phase="pain">Pain</button>
+            <button class="phase-btn phase-abbr-btn" data-phase="gain">Gain</button>
+            <button class="phase-btn phase-abbr-btn" data-phase="solutions">Sol</button>
         </nav>
+
+        <!-- SCAMPER Phases -->
+        <nav id="ctrl-phases-scamper">
+            <button class="phase-btn scamper-letter-btn" data-phase="substitute">S</button>
+            <button class="phase-btn scamper-letter-btn" data-phase="combine">C</button>
+            <button class="phase-btn scamper-letter-btn" data-phase="adapt">A</button>
+            <button class="phase-btn scamper-letter-btn" data-phase="modify">M</button>
+            <button class="phase-btn scamper-letter-btn" data-phase="put_to_use">P</button>
+            <button class="phase-btn scamper-letter-btn" data-phase="eliminate">E</button>
+            <button class="phase-btn scamper-letter-btn" data-phase="reverse">R</button>
+        </nav>
+
+        <button class="ctrl-btn" id="groups-btn">👥 <span id="groups-count">—</span></button>
 
         <div id="ctrl-actions">
             <button class="ctrl-btn" id="qr-btn">📱 QR Code</button>
@@ -34,6 +54,24 @@
             <button class="ctrl-btn ctrl-btn-danger" id="restart-btn">⟳ Restart</button>
         </div>
     </header>
+
+    <!-- ── GROUPS MODAL ── -->
+    <div id="groups-modal" class="modal-overlay">
+        <div class="modal-card modal-card-sm">
+            <h3 class="modal-title">Connected Groups</h3>
+            <div id="groups-modal-dots"></div>
+            <p id="groups-modal-desc" class="modal-desc"></p>
+            <button class="modal-close-btn" id="groups-modal-close">Close</button>
+        </div>
+    </div>
+
+    <!-- ── NOTE DETAIL MODAL ── -->
+    <div id="note-modal" class="modal-overlay">
+        <div id="note-modal-card" class="note-modal-card">
+            <div id="note-modal-content"></div>
+            <div id="note-modal-group"></div>
+        </div>
+    </div>
 
     <!-- ── QR MODAL ── -->
     <div id="qr-modal" class="modal-overlay">
@@ -65,19 +103,15 @@
 
             <div class="upper-canvas">
 
-                <!-- 1. Triangle background fills (clipped solid colors, visual only) -->
                 <div class="quad-bg bg-think"></div>
                 <div class="quad-bg bg-see"></div>
                 <div class="quad-bg bg-say"></div>
                 <div class="quad-bg bg-hear"></div>
 
-                <!-- 2. Diagonal X divider lines (corner-to-corner) -->
                 <svg class="canvas-x-lines" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                     <line x1="0" y1="0" x2="100" y2="100"/>
                     <line x1="100" y1="0" x2="0" y2="100"/>
                 </svg>
-
-                <!-- 3. Section containers — NO clip-path so notes are never clipped -->
 
                 <!-- Think & Feel (Top) -->
                 <div class="quadrant top-section" id="think_feel">
@@ -111,7 +145,6 @@
                     </div>
                 </div>
 
-                <!-- 4. Active section outline SVG (after sections — sits above notes/headers in DOM order) -->
                 <svg id="active-outline-svg" viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true">
                     <polygon id="poly-think_feel" points="0,0 100,0 50,50"/>
                     <polygon id="poly-see"        points="100,0 100,100 50,50"/>
@@ -119,7 +152,6 @@
                     <polygon id="poly-hear"       points="0,100 0,0 50,50"/>
                 </svg>
 
-                <!-- 5. Center Persona (z-index: 100, always on top of everything) -->
                 <div class="center-persona">
                     <div class="persona-avatar">👤</div>
                     <p class="persona-label">USER</p>
@@ -147,9 +179,83 @@
         </div>
     </div>
 
+    <!-- ── SCAMPER CANVAS ── -->
+    <div id="scamper-wrapper">
+        <div id="scamper-map">
+            <div id="scamper-canvas">
+
+                <div class="scamper-section" id="substitute">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">S</div>
+                        <div class="scamper-word">Substitute</div>
+                        <div class="scamper-zh">替換</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+                <div class="scamper-section" id="combine">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">C</div>
+                        <div class="scamper-word">Combine</div>
+                        <div class="scamper-zh">結合</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+                <div class="scamper-section" id="adapt">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">A</div>
+                        <div class="scamper-word">Adapt</div>
+                        <div class="scamper-zh">調整</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+                <div class="scamper-section" id="modify">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">M</div>
+                        <div class="scamper-word">Modify</div>
+                        <div class="scamper-zh">修改</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+                <div class="scamper-section" id="put_to_use">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">P</div>
+                        <div class="scamper-word">Put to Use</div>
+                        <div class="scamper-zh">另作他用</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+                <div class="scamper-section" id="eliminate">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">E</div>
+                        <div class="scamper-word">Eliminate</div>
+                        <div class="scamper-zh">消除</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+                <div class="scamper-section" id="reverse">
+                    <div class="scamper-header">
+                        <div class="scamper-letter">R</div>
+                        <div class="scamper-word">Reverse</div>
+                        <div class="scamper-zh">逆轉</div>
+                    </div>
+                    <div class="notes-area"></div>
+                </div>
+
+            </div>
+            <div class="copyright">© 2026 Dr. Huang Wei Lun &nbsp;|&nbsp; v2.0</div>
+        </div>
+    </div>
+
     <script>
         const socket = io();
         let currentPhase = null;
+        let currentTemplate = 'empathy';
 
         const GROUP_COLORS = [
             '#FFD43B', '#FF6B6B', '#51CF66', '#339AF0', '#FF922B',
@@ -160,7 +266,6 @@
             return GROUP_COLORS[(parseInt(group) - 1) % GROUP_COLORS.length] || '#FFD43B';
         }
 
-        // Active border color per upper-quadrant phase
         const PHASE_OUTLINE_COLORS = {
             think_feel: '#EC4899',
             see:        '#F59E0B',
@@ -168,10 +273,30 @@
             say_do:     '#22C55E'
         };
 
+        // ── Template Control ──
+        function applyTemplate(template) {
+            currentTemplate = template;
+            document.getElementById('map-wrapper').style.display = template === 'empathy' ? 'flex' : 'none';
+            document.getElementById('scamper-wrapper').style.display = template === 'scamper' ? 'flex' : 'none';
+            document.getElementById('ctrl-phases').style.display = template === 'empathy' ? 'flex' : 'none';
+            document.getElementById('ctrl-phases-scamper').style.display = template === 'scamper' ? 'flex' : 'none';
+            document.querySelectorAll('.template-btn').forEach(btn => {
+                btn.classList.toggle('active', btn.dataset.template === template);
+            });
+        }
+
+        document.querySelectorAll('.template-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                if (btn.dataset.template !== currentTemplate) {
+                    socket.emit('set_template', btn.dataset.template);
+                }
+            });
+        });
+
         // ── Phase Control ──
         function applyPhase(phase) {
             currentPhase = phase;
-            document.querySelectorAll('.quadrant, .footer-section').forEach(el => el.classList.remove('section-active'));
+            document.querySelectorAll('.quadrant, .footer-section, .scamper-section').forEach(el => el.classList.remove('section-active'));
             document.querySelectorAll('.phase-btn').forEach(btn => btn.classList.remove('active'));
             document.querySelectorAll('#active-outline-svg polygon').forEach(p => p.classList.remove('active-poly'));
             if (phase) {
@@ -185,7 +310,6 @@
             }
         }
 
-        // Toggle phase on click (click active → deactivate)
         document.querySelectorAll('.phase-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const p = btn.dataset.phase;
@@ -198,6 +322,19 @@
             return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
         }
 
+        // ── Note Detail Modal ──
+        const noteModal = document.getElementById('note-modal');
+        const noteModalCard = document.getElementById('note-modal-card');
+        const noteModalContent = document.getElementById('note-modal-content');
+        const noteModalGroup = document.getElementById('note-modal-group');
+
+        noteModal.addEventListener('click', (e) => {
+            if (e.target === noteModal) noteModal.classList.remove('active');
+        });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') noteModal.classList.remove('active');
+        });
+
         function addNoteToDOM(note) {
             const section = document.getElementById(note.category);
             if (!section) return;
@@ -209,6 +346,13 @@
             el.style.backgroundColor = getGroupColor(note.group);
             el.innerHTML = `<div class="note-content">${escHtml(note.content)}</div><div class="note-group">G${note.group}</div>`;
 
+            el.addEventListener('click', (e) => {
+                e.stopPropagation();
+                noteModalContent.textContent = note.content;
+                noteModalGroup.textContent = `Group ${note.group}`;
+                noteModalCard.style.backgroundColor = getGroupColor(note.group);
+                noteModal.classList.add('active');
+            });
             el.addEventListener('contextmenu', e => {
                 e.preventDefault();
                 socket.emit('delete_note', note.id);
@@ -217,15 +361,48 @@
             area.appendChild(el);
         }
 
+        // ── Connected Groups ──
+        const groupsModal = document.getElementById('groups-modal');
+
+        function renderGroups(groups) {
+            const countEl = document.getElementById('groups-count');
+            const dotsEl = document.getElementById('groups-modal-dots');
+            const descEl = document.getElementById('groups-modal-desc');
+
+            if (!groups || groups.length === 0) {
+                countEl.textContent = '0';
+                dotsEl.innerHTML = '<p class="groups-modal-empty">No groups connected yet.</p>';
+                descEl.textContent = '';
+                return;
+            }
+            countEl.textContent = `${groups.length} Group${groups.length > 1 ? 's' : ''}`;
+            dotsEl.innerHTML = groups.map(g => {
+                const color = GROUP_COLORS[g - 1] || '#ccc';
+                return `<span class="group-modal-dot" style="background:${color}">G${g}</span>`;
+            }).join('');
+            descEl.textContent = `Group ${groups.join(', ')}`;
+        }
+
+        document.getElementById('groups-btn').addEventListener('click', () => groupsModal.classList.add('active'));
+        document.getElementById('groups-modal-close').addEventListener('click', () => groupsModal.classList.remove('active'));
+        groupsModal.addEventListener('click', e => { if (e.target === groupsModal) groupsModal.classList.remove('active'); });
+
         // ── Socket Events ──
-        socket.on('init_data', ({ notes, currentPhase: p }) => {
+        socket.on('init_data', ({ notes, currentPhase: p, currentTemplate: t, connectedGroups: g }) => {
             document.querySelectorAll('.sticky-note').forEach(el => el.remove());
+            applyTemplate(t || 'empathy');
             notes.forEach(addNoteToDOM);
             applyPhase(p);
+            renderGroups(g || []);
         });
+        socket.on('groups_updated', renderGroups);
         socket.on('new_note', addNoteToDOM);
         socket.on('note_deleted', id => document.getElementById(`note-${id}`)?.remove());
         socket.on('phase_changed', applyPhase);
+        socket.on('template_changed', ({ template, phase }) => {
+            applyTemplate(template);
+            applyPhase(phase);
+        });
         socket.on('restarted', () => {
             document.querySelectorAll('.sticky-note').forEach(el => el.remove());
             applyPhase(null);
@@ -261,16 +438,17 @@
             btn.textContent = '⏳ Exporting...';
             btn.disabled = true;
             try {
-                const canvas = await html2canvas(document.getElementById('empathy-map'), {
+                const mapEl = currentTemplate === 'scamper'
+                    ? document.getElementById('scamper-map')
+                    : document.getElementById('empathy-map');
+                const canvas = await html2canvas(mapEl, {
                     scale: 2, useCORS: true, logging: false, backgroundColor: '#ffffff',
                     onclone: (clonedDoc) => {
-                        // Freeze noteIn animation so notes are fully visible (not mid-fade)
                         clonedDoc.querySelectorAll('.sticky-note').forEach(el => {
                             el.style.animation = 'none';
                             el.style.opacity   = '1';
                             el.style.transform = 'none';
                         });
-                        // html2canvas can't render backdrop-filter; replace with opaque bg
                         clonedDoc.querySelectorAll('.section-header').forEach(el => {
                             el.style.backdropFilter       = 'none';
                             el.style.webkitBackdropFilter = 'none';
@@ -279,7 +457,7 @@
                     }
                 });
                 const a = document.createElement('a');
-                a.download = `empathy-map-${new Date().toISOString().slice(0, 10)}.png`;
+                a.download = `${currentTemplate}-${new Date().toISOString().slice(0, 10)}.png`;
                 a.href = canvas.toDataURL('image/png');
                 a.click();
             } catch (e) {

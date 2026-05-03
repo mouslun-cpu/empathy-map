@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Empathy Map — Student</title>
+    <title>Canvas — Student</title>
     <link rel="stylesheet" href="/style.css">
     <script src="/socket.io/socket.io.js"></script>
 </head>
@@ -12,8 +12,8 @@
     <!-- ── GROUP SELECTION SCREEN ── -->
     <div id="group-select-screen">
         <div id="group-select-wrap">
-            <div class="student-logo">🗺</div>
-            <h1 class="student-title">Empathy Map</h1>
+            <div class="student-logo">🎨</div>
+            <h1 class="student-title">Canvas</h1>
             <p class="student-subtitle">Select your group number to begin</p>
             <div id="group-grid">
                 <!-- Injected by JS -->
@@ -65,6 +65,7 @@
 
     <script>
         const PHASES = {
+            // ── Empathy Map ──
             think_feel: {
                 label: 'Think & Feel', emoji: '🧠',
                 color: '#FCE4EC', accent: '#E91E63',
@@ -99,6 +100,42 @@
                 label: 'Solutions', emoji: '💡',
                 color: '#E0F7FA', accent: '#00BCD4',
                 desc: 'Based on the pain points identified, what solutions can we propose to address the user\'s needs?'
+            },
+            // ── SCAMPER ──
+            substitute: {
+                label: 'Substitute 替換', emoji: '🔄',
+                color: '#FFE4E4', accent: '#FF6B6B',
+                desc: '有什麼可以被替換？試著替換掉某個元素、材料、角色或規則，看看會有什麼改變。'
+            },
+            combine: {
+                label: 'Combine 結合', emoji: '🔗',
+                color: '#FFF0E0', accent: '#FF922B',
+                desc: '有什麼可以結合在一起？將兩個以上的概念、功能或產品融合，創造新的可能性。'
+            },
+            adapt: {
+                label: 'Adapt 調整', emoji: '🔧',
+                color: '#FFFDE7', accent: '#D97706',
+                desc: '有什麼可以從其他地方借用或調整？參考不同領域的做法，應用到目前的問題上。'
+            },
+            modify: {
+                label: 'Modify 修改', emoji: '✏️',
+                color: '#F0FDF4', accent: '#16A34A',
+                desc: '有什麼可以放大、縮小或修改？改變形狀、大小、顏色或屬性，強調或弱化某些特質。'
+            },
+            put_to_use: {
+                label: 'Put to Use 另作他用', emoji: '♻️',
+                color: '#F0FDFA', accent: '#0D9488',
+                desc: '這個東西還能用在哪裡？把現有的元素或方法放到不同情境或對象，發現新用途。'
+            },
+            eliminate: {
+                label: 'Eliminate 消除', emoji: '✂️',
+                color: '#EFF6FF', accent: '#2563EB',
+                desc: '有什麼可以去掉或簡化？移除不必要的環節，讓整體更精簡、更聚焦。'
+            },
+            reverse: {
+                label: 'Reverse 逆轉', emoji: '🔃',
+                color: '#F5F3FF', accent: '#7C3AED',
+                desc: '如果把順序顛倒、角色對調、或換個方向來思考呢？逆向操作往往能帶來意外的突破。'
             }
         };
 
@@ -127,6 +164,7 @@
             document.documentElement.style.setProperty('--group-color', color);
             document.getElementById('group-chip-dot').style.color = color;
             document.getElementById('group-chip-num').textContent = myGroup;
+            socket.emit('set_group', myGroup);
         }
 
         // ── Group Selection ──
@@ -208,6 +246,7 @@
         socket.on('connect', () => {
             document.getElementById('conn-status').textContent = '🟢 Connected';
             document.getElementById('conn-status').className = 'conn-online';
+            if (myGroup) socket.emit('set_group', myGroup);
         });
         socket.on('disconnect', () => {
             document.getElementById('conn-status').textContent = '🔴 Disconnected';
@@ -215,6 +254,7 @@
         });
         socket.on('init_data', ({ currentPhase: p }) => applyPhase(p));
         socket.on('phase_changed', applyPhase);
+        socket.on('template_changed', ({ phase }) => applyPhase(phase));
         socket.on('restarted', () => applyPhase(null));
 
         // ── Init ──
